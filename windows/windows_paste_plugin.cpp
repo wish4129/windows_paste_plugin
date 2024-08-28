@@ -14,8 +14,6 @@
 
 #include <memory>
 #include <sstream>
-#include <codecvt>
-#include <locale>
 
 namespace windows_paste_plugin {
 
@@ -71,8 +69,13 @@ HHOOK keyboard_hook = NULL;
 
 // Helper function to convert wstring to UTF-8 string
 std::string wstring_to_utf8(const std::wstring& wstr) {
-    std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-    return converter.to_bytes(wstr);
+    if (wstr.empty()) {
+        return std::string();
+    }
+    int size_needed = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), NULL, 0, NULL, NULL);
+    std::string str(size_needed, 0);
+    WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), &str[0], size_needed, NULL, NULL);
+    return str;
 }
 
 LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
