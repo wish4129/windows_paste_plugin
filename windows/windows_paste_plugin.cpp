@@ -17,6 +17,9 @@
 
 namespace windows_paste_plugin {
 
+// Add this line to declare event_sink
+std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> event_sink;
+
 // static
 void WindowsPastePlugin::RegisterWithRegistrar(
     flutter::PluginRegistrarWindows *registrar) {
@@ -56,7 +59,6 @@ void WindowsPastePlugin::RegisterWithRegistrar(
 
 namespace {
 HHOOK keyboard_hook = NULL;
-std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> event_sink;
 
 LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
   if (nCode >= 0) {
@@ -65,13 +67,17 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
       if (pKbdStruct->vkCode == 'V' && GetAsyncKeyState(VK_CONTROL) & 0x8000) {
         // Ctrl+V detected, get clipboard text
         if (OpenClipboard(NULL)) {
-          HANDLE hData = GetClipboardData(CF_TEXT);
+          HANDLE hData = GetClipboardData(CF_UNICODETEXT);
           if (hData != NULL) {
-            char* pszText = static_cast<char*>(GlobalLock(hData));
+            wchar_t* pszText = static_cast<wchar_t*>(GlobalLock(hData));
             if (pszText != NULL) {
+              // Convert wchar_t* to std::string
+              std::wstring wstr(pszText);
+              std::string str(wstr.begin(), wstr.end());
+              
               // Send clipboard text through event channel
               if (event_sink) {
-                event_sink->Success(flutter::EncodableValue(std::string(pszText)));
+                event_sink->Success(flutter::EncodableValue(str));
               }
               GlobalUnlock(hData);
             }
