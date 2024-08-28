@@ -10,8 +10,8 @@ class WindowsPastePlugin {
     return WindowsPastePluginPlatform.instance.getPlatformVersion();
   }
 
-  Stream<void> get onPaste {
-    return _eventChannel.receiveBroadcastStream().map((_) => null);
+  Stream<String> get onPaste {
+    return _eventChannel.receiveBroadcastStream().map((dynamic event) => event as String);
   }
 
   Future<void> initialize() async {
