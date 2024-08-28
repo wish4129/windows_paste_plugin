@@ -20,6 +20,25 @@ namespace windows_paste_plugin {
 // Add this line to declare event_sink
 std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> event_sink;
 
+class WindowsPasteStreamHandler : public flutter::StreamHandler<flutter::EncodableValue> {
+ public:
+  WindowsPasteStreamHandler() = default;
+  virtual ~WindowsPasteStreamHandler() = default;
+
+  std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>> OnListenInternal(
+      const flutter::EncodableValue* arguments,
+      std::unique_ptr<flutter::EventSink<flutter::EncodableValue>>&& events) override {
+    event_sink = std::move(events);
+    return nullptr;
+  }
+
+  std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>> OnCancelInternal(
+      const flutter::EncodableValue* arguments) override {
+    event_sink.reset();
+    return nullptr;
+  }
+};
+
 // static
 void WindowsPastePlugin::RegisterWithRegistrar(
     flutter::PluginRegistrarWindows *registrar) {
@@ -40,19 +59,7 @@ void WindowsPastePlugin::RegisterWithRegistrar(
         plugin_pointer->HandleMethodCall(call, std::move(result));
       });
 
-  event_channel->SetStreamHandler(
-      std::make_unique<flutter::StreamHandler<flutter::EncodableValue>>(
-          [](const flutter::EncodableValue* arguments,
-             std::unique_ptr<flutter::EventSink<flutter::EncodableValue>>&& events)
-              -> std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>> {
-            event_sink = std::move(events);
-            return nullptr;
-          },
-          [](const flutter::EncodableValue* arguments)
-              -> std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>> {
-            event_sink.reset();
-            return nullptr;
-          }));
+  event_channel->SetStreamHandler(std::make_unique<WindowsPasteStreamHandler>());
 
   registrar->AddPlugin(std::move(plugin));
 }
