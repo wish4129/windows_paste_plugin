@@ -14,6 +14,8 @@
 
 #include <memory>
 #include <sstream>
+#include <codecvt>
+#include <locale>
 
 namespace windows_paste_plugin {
 
@@ -67,6 +69,12 @@ void WindowsPastePlugin::RegisterWithRegistrar(
 namespace {
 HHOOK keyboard_hook = NULL;
 
+// Helper function to convert wstring to UTF-8 string
+std::string wstring_to_utf8(const std::wstring& wstr) {
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+    return converter.to_bytes(wstr);
+}
+
 LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
   if (nCode >= 0) {
     if (wParam == WM_KEYDOWN) {
@@ -78,13 +86,13 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
           if (hData != NULL) {
             wchar_t* pszText = static_cast<wchar_t*>(GlobalLock(hData));
             if (pszText != NULL) {
-              // Convert wchar_t* to std::string
+              // Convert wchar_t* to UTF-8 string
               std::wstring wstr(pszText);
-              std::string str(wstr.begin(), wstr.end());
+              std::string utf8_str = wstring_to_utf8(wstr);
               
               // Send clipboard text through event channel
               if (event_sink) {
-                event_sink->Success(flutter::EncodableValue(str));
+                event_sink->Success(flutter::EncodableValue(utf8_str));
               }
               GlobalUnlock(hData);
             }
