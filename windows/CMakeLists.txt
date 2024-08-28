@@ -25,8 +25,8 @@ list(APPEND PLUGIN_SOURCES
 # Define the plugin library target. Its name must not be changed (see comment
 # on PLUGIN_NAME above).
 add_library(${PLUGIN_NAME} SHARED
-  "include/windows_paste_plugin/windows_paste_plugin_c_api.h"
-  "windows_paste_plugin_c_api.cpp"
+  "include/windows_paste_plugin/windows_paste_plugin.h"
+  "windows_paste_plugin.cpp"
   ${PLUGIN_SOURCES}
 )
 
