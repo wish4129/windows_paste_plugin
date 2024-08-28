@@ -1,29 +1,39 @@
-#include "windows_paste_plugin.h"
-
-// This must be included before many other Windows headers.
-#include <windows.h>
-
-// For getPlatformVersion; remove unless needed for your plugin implementation.
-#include <VersionHelpers.h>
+#include "include/window_paste_plugin/window_paste_plugin.h"
 
 #include <flutter/method_channel.h>
 #include <flutter/plugin_registrar_windows.h>
 #include <flutter/standard_method_codec.h>
 
+#include <map>
 #include <memory>
 #include <sstream>
 
-namespace windows_paste_plugin {
+namespace {
+
+class WindowPastePlugin : public flutter::Plugin {
+ public:
+  static void RegisterWithRegistrar(flutter::PluginRegistrarWindows *registrar);
+
+  WindowPastePlugin();
+
+  virtual ~WindowPastePlugin();
+
+ private:
+  // Add necessary methods and variables for Windows implementation
+  void HandleMethodCall(
+      const flutter::MethodCall<flutter::EncodableValue> &method_call,
+      std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
+};
 
 // static
-void WindowsPastePlugin::RegisterWithRegistrar(
+void WindowPastePlugin::RegisterWithRegistrar(
     flutter::PluginRegistrarWindows *registrar) {
   auto channel =
       std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
-          registrar->messenger(), "windows_paste_plugin",
+          registrar->messenger(), "window_paste_plugin",
           &flutter::StandardMethodCodec::GetInstance());
 
-  auto plugin = std::make_unique<WindowsPastePlugin>();
+  auto plugin = std::make_unique<WindowPastePlugin>();
 
   channel->SetMethodCallHandler(
       [plugin_pointer = plugin.get()](const auto &call, auto result) {
@@ -33,27 +43,29 @@ void WindowsPastePlugin::RegisterWithRegistrar(
   registrar->AddPlugin(std::move(plugin));
 }
 
-WindowsPastePlugin::WindowsPastePlugin() {}
+WindowPastePlugin::WindowPastePlugin() {}
 
-WindowsPastePlugin::~WindowsPastePlugin() {}
+WindowPastePlugin::~WindowPastePlugin() {}
 
-void WindowsPastePlugin::HandleMethodCall(
+void WindowPastePlugin::HandleMethodCall(
     const flutter::MethodCall<flutter::EncodableValue> &method_call,
     std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
-  if (method_call.method_name().compare("getPlatformVersion") == 0) {
-    std::ostringstream version_stream;
-    version_stream << "Windows ";
-    if (IsWindows10OrGreater()) {
-      version_stream << "10+";
-    } else if (IsWindows8OrGreater()) {
-      version_stream << "8";
-    } else if (IsWindows7OrGreater()) {
-      version_stream << "7";
-    }
-    result->Success(flutter::EncodableValue(version_stream.str()));
+  if (method_call.method_name().compare("start") == 0) {
+    // Implement start logic
+    result->Success(flutter::EncodableValue(true));
+  } else if (method_call.method_name().compare("stop") == 0) {
+    // Implement stop logic
+    result->Success();
   } else {
     result->NotImplemented();
   }
 }
 
-}  // namespace windows_paste_plugin
+}  // namespace
+
+void WindowPastePluginRegisterWithRegistrar(
+    FlutterDesktopPluginRegistrarRef registrar) {
+  WindowPastePlugin::RegisterWithRegistrar(
+      flutter::PluginRegistrarManager::GetInstance()
+          ->GetRegistrar<flutter::PluginRegistrarWindows>(registrar));
+}
