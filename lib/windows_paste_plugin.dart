@@ -18,3 +18,5 @@ class WindowsPastePlugin {
     await _channel.invokeMethod('initialize');
   }
 }
+
+final windowsPastePlugin = WindowsPastePlugin();
